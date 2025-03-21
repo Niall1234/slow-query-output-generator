@@ -6,8 +6,14 @@
     USERNAME=<your RISK ID>
     PASSWORD=<your EU Password>
 4. save your .env file
-5. open a terminal window in this folder and run the commands below
+
+SETTING UP THE ENVIRONMENT - MANUAL METHOD
+1. open a terminal window in this folder and run the commands below
     python -m venv 11_env
     11_env\Scripts\activate 
     python -m pip install -r requirements.txt 
-6. Open the folder in VSCode and run the query_output.py file for best experience
+2. run python query_output.py 
+
+SETTING UP THE ENVIRONMENT - VSCODE METHOD
+1. open the folder in VSCode
+2. Press CTRL+SHIFT+P > 'Python: Create Environment...' > 'Venv' > 'requirements.txt'
