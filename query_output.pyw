@@ -125,10 +125,65 @@ def upload_file():
     except Exception as exc:
         error_output(exc)
              
-# TO DO: error handling in GUI
+# error handling in GUI
 def error_output(error):
     errors_field.delete(1.0, END)
     errors_field.insert(1.0, error)
+
+# pre-made queries from https://confluence.rsi.lexisnexis.com/display/BSUOCS/Useful+SQL
+def useful_sql(query_name):
+    queries = {
+        "Managed Services IDVM Report": 
+        """select
+        `records`.`pid` "URN",
+        `records`.`idvDate` "IDV Date",
+        `records`.`projectId` "Project ID",
+        projects.projectName "Project Name",
+        `records`.`schemeName` "Scheme Name",
+        `records`.`letter1Issued` "Letter 1 Date",
+        `records`.`notes` "Notes",
+        users.name "User Name",
+        idvType.name "Source",
+        idvStatus.name "Status",
+        `records`.`lastupdated` "Date Completed"
+        from `records`
+        
+        left join
+            `idvType` on `records`.`idvType` = `idvType`.`id`
+        left join
+            `idvStatus` on `records`.`idvStatus` = `idvStatus`.`id`
+        left join
+            `users` on `records`.`user_id` = `users`.`id`
+        left join
+            `projects` on `records`.`projectId` = `projects`.`id`
+        
+        where
+            `records`.`idvDate` >= "2023-01-01" AND
+            `records`.`idvDate` <= "2023-11-10";
+        """,
+        "Internal/External Customer Report With Last Login":
+        """SELECT 
+        u.username AS Username,CONCAT(u.forename, ' ' ,u.surname) as Name, u.email,c.name AS Company , r.name AS Account_Type,CASE WHEN fk_status_id = '1' THEN 'Active'
+        WHEN fk_status_id = '2' THEN 'Closed Status' WHEN fk_status_id = '3' THEN 'Account Locked' ELSE 'N/A' END AS Account_status, max(s.timestamp) as Last_Login FROM `company`c
+        LEFT JOIN user u ON c.id = u.fk_company_id
+        LEFT JOIN user_role ur ON ur.user_id = u.id
+        LEFT JOIN application a ON ur.application_id = a.id
+        LEFT JOIN role r ON r.id = ur.role_id
+        LEFT JOIN company_status cs ON cs.status = c.company_status
+        LEFT JOIN sso.login_attempt s ON s.user_name = u.username
+        WHERE cs.product_access = 1
+        AND u.fk_status_id IN (1,3)
+        AND c.id NOT IN (2)
+        AND r.name NOT IN ('Smartcleanse Interface','IDU','TraceIQ','RiskView UK','Risk Management Solutions')
+        AND a.display_name IN ('Smartcleanse Interface') 
+        GROUP by Username 
+        ORDER BY `r`.`name` DESC;
+        """
+    }
+    for k, v in queries.items():
+        if query_name == k:
+            sql_field.delete(1.0, END)
+            sql_field.insert(1.0, v)
 
 # Building TK interface
 window = Tk()
@@ -140,11 +195,23 @@ sql_frame = Frame(master=master_frame, padx=5, pady=5)
 sql_frame.pack(side = LEFT, expand = True)
 
 sql_field = Text(master=sql_frame, width=50, height=20)
-sql_field.pack(side = LEFT)
+sql_field.pack(side = TOP)
 sql_field.insert(1.0, "Type your SQL here...")
 
 button_frame = Frame(master=master_frame, padx=5, pady=5)
-button_frame.pack(side = RIGHT, expand = True)
+button_frame.pack(side = BOTTOM, expand = True)
+
+preloaded_sql_frame = Frame(master=master_frame, padx=5, pady=5)
+preloaded_sql_frame.pack(side = TOP, expand = True)
+
+preload_label = Label(master=preloaded_sql_frame, text="Useful SQL")
+preload_label.pack(side = TOP, expand = True)
+
+useful_sql_button_1 = Button(master=preloaded_sql_frame, width=50, height=2, text="Managed Services IDVM Report", command= lambda: useful_sql("Managed Services IDVM Report"))
+useful_sql_button_1.pack(side = TOP, expand = True)
+
+useful_sql_button_2 = Button(master=preloaded_sql_frame, width=50, height=2, text="Internal/External Customer Report With Last Login", command= lambda: useful_sql("Internal/External Customer Report With Last Login"))
+useful_sql_button_2.pack(side = TOP, expand = True)
 
 filename_label = Label(master=button_frame, text="Enter filename for output")
 filename_label.pack(expand = True)
@@ -168,9 +235,9 @@ upload_button.pack(expand = True)
 selected_file_label = Label(master=button_frame, height=1)
 selected_file_label.pack(expand = True, fill = BOTH)
 
-errors_field = Text(master=button_frame, width=30, height=7, background="black", foreground="yellow")
+errors_field = Text(master=sql_frame, width=50, height=7, background="black", foreground="yellow")
 errors_field.insert(1.0, "Errors will appear here...")
-errors_field.pack(expand = True)
+errors_field.pack(side = BOTTOM, expand = True)
 
 window.mainloop()
 
